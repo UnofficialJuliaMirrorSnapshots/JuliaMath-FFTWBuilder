@@ -1,0 +1,45 @@
+language: julia
+os:
+- linux
+julia:
+- 0.6
+notifications:
+  email: false
+git:
+  depth: 99999999
+cache:
+  timeout: 1000
+  directories:
+  - downloads
+env:
+  global:
+  - BINARYBUILDER_DOWNLOADS_CACHE=downloads
+  - BINARYBUILDER_AUTOMATIC_APPLE=true
+  matrix:
+  - PART=1/6
+  - PART=2/6
+  - PART=3/6
+  - PART=4/6
+  - PART=5/6
+  - PART=6/6
+sudo: required
+jobs:
+  include:
+  - stage: regenerate build.jl
+    script: julia build_tarballs.jl --only-buildjl
+    if: tag IS present
+before_script:
+- julia -e 'Pkg.clone("https://github.com/JuliaPackaging/BinaryProvider.jl")'
+- julia -e 'Pkg.clone("https://github.com/JuliaPackaging/BinaryBuilder.jl"); Pkg.build()'
+script:
+- julia build_tarballs.jl --part=$PART
+deploy:
+  provider: releases
+  api_key:
+    secure: 0jk5h8ZDEtQjYB/Gp6RIRykoL+1I9iTfqsh3MKRp5ksJadVxtC8NS8XZAHslPLza3CW1Q8XR2k1pq7doTieELDYMjaqWyr+zAcLDjEER8fSJX9rFMqIjSILMP+oKzSUeJkQKDzeQLM89kCq8nhW3bFhegK//4CPf8ay/RQyenZakqp47p30/5976WoCs8veu4dAbdh3yhwOMzUKvX8bEnblVnU7TkgriBXy4U2pFJ7Hk+cguPVFGyT3DQkbhz7re04gaNqehsZ5LPfHR6eWmnVbWyezz7S/cJ/UW+x5Hwio/dqZ1CnCNPhAl4ubummGXGnGURFn0K1pRn/Cxu3UEDOzDtc6Q6iRuZhYjvugeziBjcRkvg6jhNFyajTTMqH+Iv5GEZqHw+KD3KgPQSQSsoQIwCnD4rxyg63i4Hpe0Fw+YIXxLoJyUu+xa5hwDLRmJEJwUx6zmSghXAhATbCYMcXzA2OaRZP6DyKPg5k6zBrmpMz66emU5hWgAKbok5HPoNRBtH7THSff03r9Bn13sGlajfE51rgaS3DHdKLAoQrK7vE8J7DO3HfxR7lwuO514N/X7hMUYEdfNMU9x+hHs28SL/nCdGy0J+tTLhcgM2Hs5yyftAZfUfFd2sN6DAEmG8y88Gz3BP1KrBFaj028451jqlges2rmuVrIpQEe0+Ag=
+  file_glob: true
+  file: products/*
+  skip_cleanup: true
+  on:
+    repo: JuliaMath/FFTWBuilder
+    tags: true
